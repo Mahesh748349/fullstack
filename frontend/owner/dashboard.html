@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Owner Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .layout {
+        display: flex;
+      }
+      .sidebar {
+        width: 220px;
+        background: #0f172a;
+        color: white;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .sidebar a {
+        display: block;
+        color: white;
+        margin: 10px 0;
+        text-decoration: none;
+      }
+      .content {
+        flex: 1;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="sidebar">
+        <h3>Owner Panel</h3>
+        <a href="#" onclick="showSection('overview')">Overview</a>
+        <a href="#" onclick="showSection('applications')">Applications</a>
+
+        <a href="#" onclick="showSection('properties')">Properties</a>
+        <a href="#" onclick="showSection('payments')">Payments</a>
+        <a href="#" onclick="showSection('maintenance')">Maintenance</a>
+
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+
+      <div class="content">
+        <h2>Welcome, <span id="name"></span></h2>
+        <div class="topbar">
+          <h2>Dashboard</h2>
+        </div>
+
+        <!-- OVERVIEW -->
+        <div id="overview">
+          <p>Manage your rental properties efficiently.</p>
+        </div>
+
+        <div id="applications" style="display: none">
+          <h3>Tenant Applications</h3>
+          <div id="apps"></div>
+        </div>
+        <div id="maintenance" style="display: none">
+          <h3>Maintenance Requests</h3>
+          <div id="ownerMaint"></div>
+        </div>
+
+        <!-- PROPERTIES -->
+        <div id="properties" style="display: none">
+          <h3>Add Property</h3>
+          <form onsubmit="addProperty(event)">
+            <input id="title" placeholder="Property Title" required />
+            <input id="city" placeholder="City" required />
+            <input id="area" placeholder="Area" required />
+            <input
+              id="rent"
+              type="number"
+              placeholder="Monthly Rent (₹)"
+              required
+            />
+            <input
+              id="deposit"
+              type="number"
+              placeholder="Deposit (₹)"
+              required
+            />
+
+            <select id="propertyType" required>
+              <option value="">Select Type</option>
+              <option>Room</option>
+              <option>1BHK</option>
+              <option>2BHK</option>
+            </select>
+
+            <textarea id="description" placeholder="Description"></textarea>
+            <button>Add Property</button>
+          </form>
+
+          <h3>Your Properties</h3>
+          <div id="propertyList"></div>
+        </div>
+
+        <div id="payments" style="display: none">
+          <h3>Tenant Payments</h3>
+          <div id="ownerPayments"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+
+    <script>
+      document.getElementById("name").innerText = localStorage.getItem("name");
+
+      function showSection(sectionId) {
+        const sections = [
+          "overview",
+          "properties",
+          "applications",
+          "payments",
+          "maintenance",
+        ];
+
+        sections.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = "none";
+        });
+
+        document.getElementById(sectionId).style.display = "block";
+
+        if (sectionId === "applications") loadApplications();
+        if (sectionId === "payments") loadOwnerPayments();
+        if (sectionId === "maintenance") loadOwnerMaintenance();
+      }
+
+      async function addProperty(e) {
+        e.preventDefault();
+
+        const data = {
+          title: title.value,
+          city: city.value,
+          area: area.value,
+          rent: rent.value,
+          deposit: deposit.value,
+          propertyType: propertyType.value,
+          description: description.value,
+        };
+
+        await apiRequest("/properties", "POST", data);
+        alert("Property added");
+        loadProperties();
+      }
+
+      async function loadProperties() {
+        const props = await apiRequest("/properties/mine");
+        const box = document.getElementById("propertyList");
+        box.innerHTML = "";
+
+        props.forEach((p) => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+      <h4>${p.title}</h4>
+      <p>${p.area}, ${p.city}</p>
+      <p>₹${p.rent} / month</p>
+      <button onclick="deleteProperty('${p._id}')">Delete</button>
+    `;
+          box.appendChild(div);
+        });
+      }
+
+      async function deleteProperty(id) {
+        await apiRequest("/properties/" + id, "DELETE");
+        loadProperties();
+      }
+
+      loadProperties();
+    </script>
+    <script>
+      async function loadApplications() {
+        const data = await apiRequest("/applications/owner");
+        const box = document.getElementById("apps");
+        box.innerHTML = "";
+
+        data.forEach((a) => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+      <h4>${a.property.title}</h4>
+      <p>Tenant: ${a.tenant.name}</p>
+      <p>Status: ${a.status}</p>
+      <button onclick="updateApp('${a._id}','Approved')">Approve</button>
+      <button onclick="updateApp('${a._id}','Rejected')">Reject</button>
+    `;
+          box.appendChild(div);
+        });
+      }
+
+      async function updateApp(id, status) {
+        await apiRequest("/applications/" + id, "PUT", { status });
+        loadApplications();
+      }
+
+      async function loadOwnerPayments() {
+        const data = await apiRequest("/payments/owner");
+        const box = document.getElementById("ownerPayments");
+        box.innerHTML = "";
+        data.forEach((p) => {
+          const d = document.createElement("div");
+          d.className = "card";
+          d.innerHTML = `
+      <h4>${p.property.title}</h4>
+      <p>Tenant: ${p.tenant.name}</p>
+      <p>${p.month} — ₹${p.amount}</p>
+      <p>Status: ${p.status}</p>
+      <button onclick="updatePayment('${p._id}','Approved')">Approve</button>
+      <button onclick="updatePayment('${p._id}','Rejected')">Reject</button>
+    `;
+          box.appendChild(d);
+        });
+      }
+
+      async function updatePayment(id, status) {
+        await apiRequest("/payments/" + id, "PUT", { status });
+        loadOwnerPayments();
+      }
+
+      async function loadOwnerMaintenance() {
+        const data = await apiRequest("/maintenance/owner");
+        const box = document.getElementById("ownerMaint");
+        box.innerHTML = "";
+
+        data.forEach((m) => {
+          const d = document.createElement("div");
+          d.className = "card";
+          d.innerHTML = `
+      <h4>${m.property.title}</h4>
+      <p>Tenant: ${m.tenant.name}</p>
+      <p>${m.issue}</p>
+      <p>Status: ${m.status}</p>
+      <button onclick="updateMaint('${m._id}','In Progress')">In Progress</button>
+      <button onclick="updateMaint('${m._id}','Resolved')">Resolved</button>
+    `;
+          box.appendChild(d);
+        });
+      }
+
+      async function updateMaint(id, status) {
+        await apiRequest("/maintenance/" + id, "PUT", { status });
+        loadOwnerMaintenance();
+      }
+    </script>
+  </body>
+</html>

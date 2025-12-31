@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tenant Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .layout {
+        display: flex;
+      }
+      .sidebar {
+        width: 220px;
+        background: #0f172a;
+        color: white;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .sidebar a {
+        display: block;
+        color: white;
+        margin: 10px 0;
+        text-decoration: none;
+      }
+      .content {
+        flex: 1;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="sidebar">
+        <h3>Tenant Panel</h3>
+        <a href="#" onclick="show('find')">Find Properties</a>
+        <a href="#" onclick="show('apps')">My Applications</a>
+        <a href="#" onclick="show('payments')">My Payments</a>
+        <a href="#" onclick="show('maintenance')">Maintenance</a>
+
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+
+      <div class="content">
+        <h2>Welcome, <span id="name"></span></h2>
+
+        <div id="find">
+          <h3>Available Properties</h3>
+          <div id="properties"></div>
+        </div>
+
+        <div id="apps" style="display: none">
+          <h3>My Applications</h3>
+          <div id="applications"></div>
+        </div>
+        <div id="payments" style="display:none;">
+        <h3>My Payments</h3>
+        <div id="paymentList"></div>
+        </div>
+          <h3>Payment History</h3>
+          <div id="paymentList"></div>
+          <div id="maintenance" style="display:none;">
+        <h3>Raise Maintenance Request</h3>
+        <div id="maintForm"></div>
+
+        <h3>My Requests</h3>
+        <div id="maintList"></div>
+        </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+
+    <script>
+      document.getElementById("name").innerText = localStorage.getItem("name");
+
+      function show(sectionId) {
+  const sections = ["find", "apps", "payments", "maintenance", "profile"];
+
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  document.getElementById(sectionId).style.display = "block";
+
+  // 🔥 LOAD DATA FOR EACH SECTION
+  if (sectionId === "apps") loadApps();
+  if (sectionId === "payments") loadPayments();
+  if (sectionId === "maintenance") loadMaintenance();
+}
+
+
+
+      async function loadProperties() {
+        const data = await apiRequest("/properties");
+        const box = document.getElementById("properties");
+        box.innerHTML = "";
+
+        data.forEach((p) => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+      <h4>${p.title}</h4>
+      <p>${p.area}, ${p.city}</p>
+      <p>₹${p.rent} / month</p>
+      <button onclick="apply('${p._id}')">Apply</button>
+    `;
+          box.appendChild(div);
+        });
+      }
+
+      async function apply(id) {
+        const res = await apiRequest("/applications/apply/" + id, "POST");
+        alert(res.message || "Applied");
+        loadApps(); // 🔥 refresh applications
+      }
+
+      async function loadPayments() {
+  const data = await apiRequest("/payments/tenant");
+  const box = document.getElementById("paymentList");
+  box.innerHTML = "";
+
+  data.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <h4>${p.property.title}</h4>
+      <p>${p.month} — ₹${p.amount}</p>
+      <p>Status: <b>${p.status}</b></p>
+    `;
+    box.appendChild(div);
+  });
+}
+
+
+      async function loadApps() {
+  const data = await apiRequest("/applications/tenant");
+  const box = document.getElementById("applications");
+  box.innerHTML = "";
+
+  data.forEach(a => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <h4>${a.property.title}</h4>
+      <p>Status: <b>${a.status}</b></p>
+      ${
+        a.status === "Approved"
+          ? `
+            <input type="month" id="month-${a._id}">
+            <button onclick="payRent('${a._id}')">Pay Rent</button>
+          `
+          : ""
+      }
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+      async function payRent(appId) {
+        const monthEl = document.getElementById("month-" + appId);
+        if (!monthEl || !monthEl.value) {
+          alert("Please select month");
+          return;
+        }
+
+        const res = await apiRequest("/payments/pay/" + appId, "POST", {
+          month: monthEl.value,
+        });
+
+        alert(res.message || "Payment submitted");
+        loadPayments();
+      }
+
+      async function loadMaintenance() {
+  const apps = await apiRequest("/applications/tenant");
+  const box = document.getElementById("maintForm");
+  box.innerHTML = "";
+
+  apps.filter(a => a.status === "Approved").forEach(a => {
+    const d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = `
+      <h4>${a.property.title}</h4>
+      <textarea id="issue-${a._id}" placeholder="Describe issue"></textarea>
+      <button onclick="raiseIssue('${a._id}')">Submit</button>
+    `;
+    box.appendChild(d);
+  });
+
+  const list = await apiRequest("/maintenance/tenant");
+  const out = document.getElementById("maintList");
+  out.innerHTML = "";
+
+  list.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = `
+      <h4>${m.property.title}</h4>
+      <p>${m.issue}</p>
+      <p>Status: <b>${m.status}</b></p>
+    `;
+    out.appendChild(d);
+  });
+}
+
+async function raiseIssue(appId) {
+  const issue = document.getElementById("issue-" + appId).value;
+  if (!issue) return alert("Enter issue");
+
+  const res = await apiRequest(
+    "/maintenance/" + appId,
+    "POST",
+    { issue }
+  );
+
+  alert(res.message);
+  loadMaintenance();
+}
+
+
+      loadProperties();
+      loadApps();
+    </script>
+  </body>
+</html>
