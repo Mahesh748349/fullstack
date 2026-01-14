@@ -53,7 +53,7 @@
 
         <div id="applications" style="display: none">
           <h3>Tenant Applications</h3>
-          <div id="apps"></div>
+          <div id="applicationsList"></div>
         </div>
         <div id="maintenance" style="display: none">
           <h3>Maintenance Requests</h3>
@@ -176,75 +176,56 @@
     <script>
       async function loadApplications() {
         const data = await apiRequest("/applications/owner");
-        const box = document.getElementById("apps");
+
+        const box = document.getElementById("applicationsList");
         box.innerHTML = "";
 
-        data.forEach((a) => {
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-      <h4>${a.property.title}</h4>
-      <p>Tenant: ${a.tenant.name}</p>
-      <p>Status: ${a.status}</p>
-      <button onclick="updateApp('${a._id}','Approved')">Approve</button>
-      <button onclick="updateApp('${a._id}','Rejected')">Reject</button>
+        if (data.length === 0) {
+          box.innerHTML = "<p>No applications found</p>";
+          return;
+        }
+
+        data.forEach((app) => {
+          const t = app.tenant;
+          const p = app.property;
+
+          const disabled = app.status !== "Pending" ? "disabled" : "";
+
+          box.innerHTML += `
+      <div class="card">
+        <h3>${p.title} (${p.city})</h3>
+        <p><b>Rent:</b> ₹${p.rent}</p>
+
+        <hr />
+
+        <h4>Tenant Details</h4>
+        <p><b>Name:</b> ${t.name}</p>
+        <p><b>Email:</b> ${t.email}</p>
+        <p><b>Mobile:</b> ${
+          t.tenantDetails?.contact?.primaryMobile || "N/A"
+        }</p>
+        <p><b>City:</b> ${t.tenantDetails?.permanentAddress?.city || "N/A"}</p>
+        <p><b>Occupation:</b> ${t.tenantDetails?.occupation?.type || "N/A"}</p>
+        <p><b>Income:</b> ₹${
+          t.tenantDetails?.income?.monthlyIncome || "N/A"
+        }</p>
+
+        <p><b>Status:</b> ${app.status}</p>
+
+        <button onclick="updateStatus('${app._id}','Approved')" ${disabled}>
+          Approve
+        </button>
+
+        <button onclick="updateStatus('${app._id}','Rejected')" ${disabled}>
+          Reject
+        </button>
+      </div>
     `;
-          box.appendChild(div);
         });
       }
-
-      async function updateApp(id, status) {
-        await apiRequest("/applications/" + id, "PUT", { status });
-        loadApplications();
-      }
-
-      async function loadOwnerPayments() {
-        const data = await apiRequest("/payments/owner");
-        const box = document.getElementById("ownerPayments");
-        box.innerHTML = "";
-        data.forEach((p) => {
-          const d = document.createElement("div");
-          d.className = "card";
-          d.innerHTML = `
-      <h4>${p.property.title}</h4>
-      <p>Tenant: ${p.tenant.name}</p>
-      <p>${p.month} — ₹${p.amount}</p>
-      <p>Status: ${p.status}</p>
-      <button onclick="updatePayment('${p._id}','Approved')">Approve</button>
-      <button onclick="updatePayment('${p._id}','Rejected')">Reject</button>
-    `;
-          box.appendChild(d);
-        });
-      }
-
-      async function updatePayment(id, status) {
-        await apiRequest("/payments/" + id, "PUT", { status });
-        loadOwnerPayments();
-      }
-
-      async function loadOwnerMaintenance() {
-        const data = await apiRequest("/maintenance/owner");
-        const box = document.getElementById("ownerMaint");
-        box.innerHTML = "";
-
-        data.forEach((m) => {
-          const d = document.createElement("div");
-          d.className = "card";
-          d.innerHTML = `
-      <h4>${m.property.title}</h4>
-      <p>Tenant: ${m.tenant.name}</p>
-      <p>${m.issue}</p>
-      <p>Status: ${m.status}</p>
-      <button onclick="updateMaint('${m._id}','In Progress')">In Progress</button>
-      <button onclick="updateMaint('${m._id}','Resolved')">Resolved</button>
-    `;
-          box.appendChild(d);
-        });
-      }
-
-      async function updateMaint(id, status) {
-        await apiRequest("/maintenance/" + id, "PUT", { status });
-        loadOwnerMaintenance();
+      async function updateStatus(id, status) {
+        await apiRequest(`/applications/${id}/status`, "PUT", { status });
+        loadApplications(); // reload list
       }
     </script>
   </body>
