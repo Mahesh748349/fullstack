@@ -5,41 +5,40 @@
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
-    <div class="container">
-      <h2>Create Account</h2>
+    <h2>Register</h2>
 
-      <form onsubmit="registerUser(event)">
-        <input id="name" placeholder="Full Name" required />
-        <input id="email" type="email" placeholder="Email" required />
-        <input id="password" type="password" placeholder="Password" required />
+    <form onsubmit="registerUser(event)">
+      <input id="name" placeholder="Full Name" required />
+      <input id="email" type="email" placeholder="Email" required />
+      <input id="password" type="password" placeholder="Password" required />
 
-        <select id="role" required>
-          <option value="">Select Role</option>
-          <option value="owner">Property Owner</option>
-          <option value="tenant">Tenant</option>
-        </select>
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="tenant">Tenant</option>
+        <option value="owner">Owner</option>
+      </select>
 
-        <div id="tenantExtraFields" style="display: none">
-          <h3>Tenant Details</h3>
+      <!-- TENANT DETAILS -->
+      <div id="tenantFields" style="display: none; margin-top: 15px">
+        <h3>Tenant Details</h3>
 
-          <input id="aadhaar" placeholder="Aadhaar Number" />
-          <input id="mobile" placeholder="Mobile Number" />
-          <input id="city" placeholder="City" />
-          <input id="occupation" placeholder="Occupation (Student / Working)" />
-          <input id="company" placeholder="Company / College Name" />
-          <input id="income" type="number" placeholder="Monthly Income" />
-        </div>
+        <input id="mobile" placeholder="Mobile Number" />
+        <input id="city" placeholder="City" />
+        <input id="occupation" placeholder="Occupation (Student / Working)" />
+        <input id="company" placeholder="Company / College Name" />
+        <input id="income" type="number" placeholder="Monthly Income" />
+      </div>
 
-        <button>Create Account</button>
-      </form>
-    </div>
+      <button type="submit">Register</button>
+    </form>
 
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
+
     <script>
       document.getElementById("role").addEventListener("change", function () {
-        document.getElementById("tenantExtraFields").style.display =
+        document.getElementById("tenantFields").style.display =
           this.value === "tenant" ? "block" : "none";
       });
     </script>

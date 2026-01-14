@@ -175,47 +175,38 @@
     </script>
     <script>
       async function loadApplications() {
-        const data = await apiRequest("/applications/owner");
+        const apps = await apiRequest("/applications/owner");
 
         const box = document.getElementById("applicationsList");
         box.innerHTML = "";
 
-        if (data.length === 0) {
+        if (!apps.length) {
           box.innerHTML = "<p>No applications found</p>";
           return;
         }
 
-        data.forEach((app) => {
+        apps.forEach((app) => {
           const t = app.tenant;
           const p = app.property;
-
           const disabled = app.status !== "Pending" ? "disabled" : "";
 
           box.innerHTML += `
       <div class="card">
-        <h3>${p.title} (${p.city})</h3>
-        <p><b>Rent:</b> ₹${p.rent}</p>
-
-        <hr />
+        <h3>${p.title} - ₹${p.rent}</h3>
 
         <h4>Tenant Details</h4>
-        <p><b>Name:</b> ${t.name}</p>
-        <p><b>Email:</b> ${t.email}</p>
-        <p><b>Mobile:</b> ${
-          t.tenantDetails?.contact?.primaryMobile || "N/A"
-        }</p>
-        <p><b>City:</b> ${t.tenantDetails?.permanentAddress?.city || "N/A"}</p>
-        <p><b>Occupation:</b> ${t.tenantDetails?.occupation?.type || "N/A"}</p>
-        <p><b>Income:</b> ₹${
-          t.tenantDetails?.income?.monthlyIncome || "N/A"
-        }</p>
+        <p>Name: ${t.name}</p>
+        <p>Email: ${t.email}</p>
+        <p>Mobile: ${t.tenantDetails?.contact?.primaryMobile || "N/A"}</p>
+        <p>City: ${t.tenantDetails?.permanentAddress?.city || "N/A"}</p>
+        <p>Occupation: ${t.tenantDetails?.occupation?.type || "N/A"}</p>
+        <p>Income: ₹${t.tenantDetails?.income?.monthlyIncome || "N/A"}</p>
 
-        <p><b>Status:</b> ${app.status}</p>
+        <p>Status: ${app.status}</p>
 
         <button onclick="updateStatus('${app._id}','Approved')" ${disabled}>
           Approve
         </button>
-
         <button onclick="updateStatus('${app._id}','Rejected')" ${disabled}>
           Reject
         </button>
@@ -223,9 +214,10 @@
     `;
         });
       }
+
       async function updateStatus(id, status) {
         await apiRequest(`/applications/${id}/status`, "PUT", { status });
-        loadApplications(); // reload list
+        loadApplications();
       }
     </script>
   </body>

@@ -8,22 +8,20 @@ async function registerUser(e) {
 
   let tenantDetails = null;
 
-  // 👇 ONLY if tenant, collect extra details
   if (role === "tenant") {
     tenantDetails = {
-      aadhaarNumber: document.getElementById("aadhaar")?.value,
-      permanentAddress: {
-        city: document.getElementById("city")?.value,
-      },
       contact: {
-        primaryMobile: document.getElementById("mobile")?.value,
+        primaryMobile: document.getElementById("mobile").value,
+      },
+      permanentAddress: {
+        city: document.getElementById("city").value,
       },
       occupation: {
-        type: document.getElementById("occupation")?.value,
-        companyOrCollege: document.getElementById("company")?.value,
+        type: document.getElementById("occupation").value,
+        companyOrCollege: document.getElementById("company").value,
       },
       income: {
-        monthlyIncome: Number(document.getElementById("income")?.value),
+        monthlyIncome: Number(document.getElementById("income").value),
       },
     };
   }
@@ -36,7 +34,7 @@ async function registerUser(e) {
     tenantDetails,
   });
 
-  alert(res.message || "Registered");
+  alert(res.message || "Registered successfully");
 
   if (!res.message?.includes("exists")) {
     window.location.href = "login.html";
@@ -49,10 +47,7 @@ async function loginUser(e) {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  const res = await apiRequest("/auth/login", "POST", {
-    email,
-    password,
-  });
+  const res = await apiRequest("/auth/login", "POST", { email, password });
 
   if (res.token) {
     localStorage.setItem("token", res.token);
