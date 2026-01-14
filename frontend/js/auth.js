@@ -6,14 +6,38 @@ async function registerUser(e) {
   const password = document.getElementById("password").value;
   const role = document.getElementById("role").value;
 
+  let tenantDetails = null;
+
+  // 👇 ONLY if tenant, collect extra details
+  if (role === "tenant") {
+    tenantDetails = {
+      aadhaarNumber: document.getElementById("aadhaar")?.value,
+      permanentAddress: {
+        city: document.getElementById("city")?.value,
+      },
+      contact: {
+        primaryMobile: document.getElementById("mobile")?.value,
+      },
+      occupation: {
+        type: document.getElementById("occupation")?.value,
+        companyOrCollege: document.getElementById("company")?.value,
+      },
+      income: {
+        monthlyIncome: Number(document.getElementById("income")?.value),
+      },
+    };
+  }
+
   const res = await apiRequest("/auth/register", "POST", {
     name,
     email,
     password,
     role,
+    tenantDetails,
   });
 
   alert(res.message || "Registered");
+
   if (!res.message?.includes("exists")) {
     window.location.href = "login.html";
   }

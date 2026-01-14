@@ -19,6 +19,17 @@
           <option value="tenant">Tenant</option>
         </select>
 
+        <div id="tenantExtraFields" style="display: none">
+          <h3>Tenant Details</h3>
+
+          <input id="aadhaar" placeholder="Aadhaar Number" />
+          <input id="mobile" placeholder="Mobile Number" />
+          <input id="city" placeholder="City" />
+          <input id="occupation" placeholder="Occupation (Student / Working)" />
+          <input id="company" placeholder="Company / College Name" />
+          <input id="income" type="number" placeholder="Monthly Income" />
+        </div>
+
         <button>Create Account</button>
       </form>
     </div>
@@ -26,5 +37,11 @@
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
+    <script>
+      document.getElementById("role").addEventListener("change", function () {
+        document.getElementById("tenantExtraFields").style.display =
+          this.value === "tenant" ? "block" : "none";
+      });
+    </script>
   </body>
 </html>
