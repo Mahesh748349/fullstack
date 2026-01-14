@@ -31,15 +31,25 @@ router.post("/apply/:propertyId", auth, async (req, res) => {
 
 /* OWNER VIEW APPLICATIONS */
 router.get("/owner", auth, async (req, res) => {
-  if (req.user.role !== "owner") {
-    return res.status(403).json({ message: "Owner access only" });
+  try {
+    if (req.user.role !== "owner") {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+
+    const apps = await Application.find({ owner: req.user.id })
+      .populate({
+        path: "tenant",
+        select: "-password", // all tenant details except password
+      })
+      .populate({
+        path: "property",
+        select: "title city area rent",
+      });
+
+    res.json(apps);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
-
-  const apps = await Application.find({ owner: req.user.id })
-    .populate("tenant", "name email")
-    .populate("property", "title city area rent");
-
-  res.json(apps);
 });
 
 /* OWNER DECISION */

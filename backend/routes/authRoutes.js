@@ -14,11 +14,12 @@ router.post("/register", async (req, res) => {
 
   const hashed = await bcrypt.hash(password, 10);
 
-  const user = await User.create({
+  const user = new User({
     name,
     email,
-    password: hashed,
+    password: hashedPassword,
     role,
+    tenantDetails: role === "tenant" ? tenantDetails : undefined,
   });
 
   res.json({ message: "Registered successfully" });
