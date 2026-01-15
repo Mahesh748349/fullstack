@@ -8,7 +8,7 @@ const router = express.Router();
 /* REGISTER */
 router.post("/register", async (req, res) => {
   try {
-    const {
+    let {
       name,
       email,
       password,
@@ -23,6 +23,15 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🔐 IMPORTANT SAFETY GUARD (THIS FIXES YOUR ISSUE)
+    if (role === "tenant" && !tenantDetails) {
+      tenantDetails = {};
+    }
+
+    if (role === "owner" && !ownerDetails) {
+      ownerDetails = {};
+    }
 
     const user = new User({
       name,
@@ -40,6 +49,7 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ message: "Registration failed" });
   }
 });
+
 
 /* LOGIN */
 router.post("/login", async (req, res) => {
