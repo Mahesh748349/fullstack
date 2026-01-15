@@ -52,24 +52,38 @@ router.get("/owner", auth, async (req, res) => {
   }
 });
 
-/* OWNER DECISION */
-router.put("/:id", auth, async (req, res) => {
-  if (req.user.role !== "owner") {
-    return res.status(403).json({ message: "Owner access only" });
+/* OWNER DECISION (APPROVE / REJECT) */
+router.put("/:id/status", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "owner") {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+
+    const { status } = req.body;
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const app = await Application.findOne({
+      _id: req.params.id,
+      owner: req.user.id,
+    });
+
+    if (!app) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    app.status = status;
+    await app.save();
+
+    res.json({ message: "Application updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Status update failed" });
   }
-
-  const app = await Application.findOne({
-    _id: req.params.id,
-    owner: req.user.id,
-  });
-
-  if (!app) return res.status(404).json({ message: "Application not found" });
-
-  app.status = req.body.status;
-  await app.save();
-
-  res.json({ message: "Application updated" });
 });
+
 
 /* TENANT VIEW OWN APPLICATIONS */
 router.get("/tenant", auth, async (req, res) => {

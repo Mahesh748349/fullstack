@@ -16,26 +16,54 @@ const TenantDetailsSchema = new mongoose.Schema({
   }
 });
 
-const UserSchema = new mongoose.Schema(
+const mongoose = require("mongoose");
+
+const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ["owner", "tenant"],
-      required: true
+    name: String,
+    email: { type: String, unique: true },
+    password: String,
+    role: { type: String, enum: ["owner", "tenant"] },
+
+    tenantDetails: {
+      aadhaarNumber: String,
+      contact: {
+        primaryMobile: String,
+        alternateMobile: String,
+        emergencyContact: String,
+      },
+      permanentAddress: {
+        city: String,
+        state: String,
+      },
+      occupation: {
+        type: String, // Student / Working
+        companyOrCollege: String,
+      },
+      income: {
+        monthlyIncome: Number,
+      },
     },
 
-    // ✅ THIS WAS MISSING
-    tenantDetails: {
-      type: TenantDetailsSchema,
-      required: function () {
-        return this.role === "tenant";
-      }
-    }
+    ownerDetails: {
+      aadhaarNumber: String,
+      contact: {
+        mobile: String,
+      },
+      address: {
+        city: String,
+        state: String,
+      },
+      bankDetails: {
+        accountNumber: String,
+        ifsc: String,
+      },
+    },
   },
   { timestamps: true }
 );
+
+module.exports = mongoose.model("User", userSchema);
+
 
 module.exports = mongoose.model("User", UserSchema);

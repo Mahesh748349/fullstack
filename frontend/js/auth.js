@@ -1,20 +1,24 @@
 async function registerUser(e) {
   e.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
   const role = document.getElementById("role").value;
 
-  let tenantDetails = null;
+  let payload = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value,
+    role,
+  };
 
   if (role === "tenant") {
-    tenantDetails = {
+    payload.tenantDetails = {
+      aadhaarNumber: document.getElementById("aadhaar").value,
       contact: {
         primaryMobile: document.getElementById("mobile").value,
       },
       permanentAddress: {
         city: document.getElementById("city").value,
+        state: document.getElementById("state").value,
       },
       occupation: {
         type: document.getElementById("occupation").value,
@@ -26,19 +30,27 @@ async function registerUser(e) {
     };
   }
 
-  const res = await apiRequest("/auth/register", "POST", {
-    name,
-    email,
-    password,
-    role,
-    tenantDetails,
-  });
+  if (role === "owner") {
+    payload.ownerDetails = {
+      aadhaarNumber: document.getElementById("ownerAadhaar").value,
+      contact: {
+        mobile: document.getElementById("ownerMobile").value,
+      },
+      address: {
+        city: document.getElementById("ownerCity").value,
+        state: document.getElementById("ownerState").value,
+      },
+      bankDetails: {
+        accountNumber: document.getElementById("account").value,
+        ifsc: document.getElementById("ifsc").value,
+      },
+    };
+  }
+
+  const res = await apiRequest("/auth/register", "POST", payload);
 
   alert(res.message || "Registered successfully");
-
-  if (!res.message?.includes("exists")) {
-    window.location.href = "login.html";
-  }
+  window.location.href = "login.html";
 }
 
 async function loginUser(e) {
