@@ -8,38 +8,20 @@ const router = express.Router();
 /* REGISTER */
 router.post("/register", async (req, res) => {
   try {
-    let {
-      name,
-      email,
-      password,
-      role,
-      tenantDetails,
-      ownerDetails,
-    } = req.body;
+    const { name, email, password, role, tenantDetails, ownerDetails } = req.body;
 
     const exists = await User.findOne({ email });
-    if (exists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    if (exists) return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 🔐 IMPORTANT SAFETY GUARD (THIS FIXES YOUR ISSUE)
-    if (role === "tenant" && !tenantDetails) {
-      tenantDetails = {};
-    }
-
-    if (role === "owner" && !ownerDetails) {
-      ownerDetails = {};
-    }
 
     const user = new User({
       name,
       email,
       password: hashedPassword,
       role,
-      tenantDetails: role === "tenant" ? tenantDetails : undefined,
-      ownerDetails: role === "owner" ? ownerDetails : undefined,
+      tenantDetails,
+      ownerDetails,
     });
 
     await user.save();
@@ -49,6 +31,7 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ message: "Registration failed" });
   }
 });
+
 
 
 /* LOGIN */
