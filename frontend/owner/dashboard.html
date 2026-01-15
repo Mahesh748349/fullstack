@@ -110,25 +110,26 @@
       document.getElementById("name").innerText = localStorage.getItem("name");
 
       function showSection(sectionId) {
-        const sections = [
-          "overview",
-          "properties",
-          "applications",
-          "payments",
-          "maintenance",
-        ];
+  const sections = [
+    "overview",
+    "applications",
+    "properties",
+    "payments",
+    "maintenance",
+  ];
 
-        sections.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = "none";
-        });
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
 
-        document.getElementById(sectionId).style.display = "block";
+  document.getElementById(sectionId).style.display = "block";
 
-        if (sectionId === "applications") loadApplications();
-        if (sectionId === "payments") loadOwnerPayments();
-        if (sectionId === "maintenance") loadOwnerMaintenance();
-      }
+  if (sectionId === "applications") loadApplications();
+  if (sectionId === "payments") loadOwnerPayments();
+  if (sectionId === "maintenance") loadOwnerMaintenance();
+}
+
 
       async function addProperty(e) {
         e.preventDefault();

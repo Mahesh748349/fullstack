@@ -52,7 +52,7 @@ router.get("/owner", auth, async (req, res) => {
   }
 });
 
-/* OWNER DECISION (APPROVE / REJECT) */
+/* OWNER APPROVE / REJECT */
 router.put("/:id/status", auth, async (req, res) => {
   try {
     if (req.user.role !== "owner") {
@@ -60,7 +60,6 @@ router.put("/:id/status", auth, async (req, res) => {
     }
 
     const { status } = req.body;
-
     if (!["Approved", "Rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -77,12 +76,12 @@ router.put("/:id/status", auth, async (req, res) => {
     app.status = status;
     await app.save();
 
-    res.json({ message: "Application updated successfully" });
+    res.json({ message: "Application updated" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Status update failed" });
   }
 });
+
 
 
 /* TENANT VIEW OWN APPLICATIONS */
